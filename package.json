@@ -1,6 +1,6 @@
 {
   "name": "gladys-hikvision",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "Gladys Assistant external integration for Hikvision IP cameras and recorders (local ISAPI).",
   "type": "module",

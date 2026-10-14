@@ -6,6 +6,8 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-10-14
+
 ### Added
 
 - Hikvision cameras and recorders (NVR / DVR) over their local ISAPI, with Digest authentication, HTTP or HTTPS, several devices at once.
@@ -24,4 +26,5 @@ All notable changes to this integration are documented here. The format follows
 
 - A refused password is never retried automatically, so the integration cannot lock the account on the device.
 
-[Unreleased]: https://github.com/prohand/gladys-hikvision/commits/main
+[Unreleased]: https://github.com/prohand/gladys-hikvision/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/prohand/gladys-hikvision/releases/tag/v0.0.1
