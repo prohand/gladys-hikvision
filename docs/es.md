@@ -1,0 +1,133 @@
+# Hikvision para Gladys Assistant
+
+Conecte sus **cámaras IP y grabadores Hikvision (NVR / DVR)** a Gladys, **en su red local**:
+imágenes de las cámaras, detecciones en tiempo real (movimiento, cruce de línea, intrusión,
+sabotaje…), entradas y salidas de alarma, PTZ, escenas y un widget para el panel.
+
+- **Solo local**: Gladys se comunica directamente con cada dispositivo mediante su ISAPI. Sin cuenta
+  Hik-Connect, sin nube, nada que abrir en el router.
+- **Un grabador aporta todas sus cámaras**: añada la dirección del NVR, no la de cada cámara
+  conectada a él.
+
+## Requisitos
+
+- Gladys **5.1 o posterior**.
+- Una cámara o un grabador Hikvision en la misma red que Gladys, con una dirección IP fija (reserva
+  DHCP).
+- Una cuenta de usuario en ese dispositivo (ver más abajo).
+
+## 1. Preparar el dispositivo
+
+En la interfaz web de la cámara o del grabador:
+
+1. **Cree un usuario dedicado**: _Configuración > Sistema > Gestión de usuarios > Añadir_. Asígnele
+   el rol **Operador**. Evite `admin`: Gladys no lo necesita.
+   - Para que Gladys pueda activar y desactivar las detecciones (armar / desarmar), el usuario
+     necesita el permiso de modificar los parámetros («Configuración de parámetros» / configuración
+     remota).
+2. **Active la ISAPI**: _Configuración > Red > Configuración avanzada > Protocolo de integración_ —
+   marque **Habilitar Hikvision-CGI** con la autenticación **Digest**. En los firmwares recientes
+   viene activado por defecto.
+3. **Anote el puerto HTTP** (_Red > Configuración básica > Puerto_) si no es el 80.
+
+> **Cuidado con las contraseñas**: Hikvision bloquea la cuenta (a menudo 30 minutos) tras varias
+> contraseñas erróneas. Por eso la integración nunca reintenta sola una contraseña rechazada:
+> corríjala y vuelva a guardar la configuración (o pulse **Probar la conexión**).
+
+## 2. Configurar la integración
+
+En Gladys: _Integraciones > Hikvision > Configuración_.
+
+| Campo                          | Qué introducir                                                                                                                                                       |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Direcciones                    | Dirección IP de cada cámara o grabador, separadas por comas: `192.168.1.64, 192.168.1.70:8080`. Añada `https://` para HTTPS.                                         |
+| Usuario / Contraseña           | La cuenta creada arriba. Se usa la misma cuenta en todos los dispositivos.                                                                                           |
+| Comprobar el certificado HTTPS | Déjelo desactivado: los dispositivos Hikvision usan un certificado autofirmado.                                                                                      |
+| Intervalo de imágenes (s)      | Cada cuánto se actualiza la imagen de cada cámara en Gladys (60 s por defecto, mínimo 10 s, 0 = solo cuando Gladys la pide).                                         |
+| Calidad de imagen              | **Flujo secundario** (recomendado). Gladys acepta imágenes de hasta 150 KB; el flujo principal se reduce a 1280×720 y se sustituye si sigue siendo demasiado grande. |
+| Duración de una detección (s)  | Cuánto tiempo sigue «activa» una detección tras el último evento de la cámara (10 s por defecto).                                                                    |
+| Intervalo de comprobación (s)  | Cada cuánto se comprueba cada dispositivo (60 s por defecto).                                                                                                        |
+| Registros detallados           | Actívelos para un diagnóstico y desactívelos después.                                                                                                                |
+
+Guarde y pulse **Probar la conexión**: una línea por dispositivo indica el modelo, el firmware, las
+cámaras en línea, las detecciones encontradas, si los eventos llegan en directo y las entradas y
+salidas de alarma. Si algo falla, la línea dice qué hacer.
+
+Abra después la pestaña **Descubrir** y cree los dispositivos que desee.
+
+## 3. Los dispositivos en Gladys
+
+**Un dispositivo por cámara** (una cámara tiene uno, un grabador uno por cámara conectada):
+
+| Función                     | Tipo                 | Notas                                                                         |
+| --------------------------- | -------------------- | ----------------------------------------------------------------------------- |
+| Imagen                      | cámara               | se actualiza en el intervalo de imágenes y bajo demanda                       |
+| Movimiento                  | sensor de movimiento | siempre presente                                                              |
+| Cruce de línea / Intrusión  | sensor de movimiento | si la cámara admite estas detecciones inteligentes                            |
+| Sabotaje                    | sabotaje             | si la cámara lo admite                                                        |
+| Detección de movimiento / … | interruptor          | activa o desactiva esa detección **en la cámara** (armar / desarmar)          |
+| PTZ                         | movimiento de cámara | solo cámaras PTZ: pasos cortos de giro, inclinación y zoom, siempre detenidos |
+| Preset                      | preset de cámara     | cámaras PTZ con posiciones guardadas: la lista viene de la cámara             |
+
+**Un dispositivo «alarm I/O» por cámara o grabador con contactos secos**: cada **entrada de
+alarma** es una entrada binaria (1 mientras está en alarma), cada **salida de alarma** (relé,
+sirena) es un interruptor.
+
+Cada dispositivo muestra una insignia **local** cuando responde, **inaccesible** si no. Un punto
+naranja significa que el dispositivo responde pero su flujo de eventos no está conectado: las
+detecciones no llegan.
+
+## 4. Escenas
+
+### Disparadores
+
+- **Una cámara Hikvision detecta algo** — filtros: la cámara, el evento (movimiento, cruce de
+  línea, intrusión, entrada / salida de zona, sabotaje, rostro, cambio de escena, objeto abandonado
+  o retirado, PIR, pérdida de vídeo, entrada de alarma) y, para los eventos inteligentes, el
+  objetivo (persona o vehículo). Se dispara una vez por detección, no en cada repetición de la
+  cámara. Variables: `event_type`, `target`, `device_name`, `channel`, `description`.
+- **Una cámara Hikvision se desconecta** / **vuelve a estar en línea** — variables: `device_name`
+  (y `reason` al desconectarse).
+
+Las funciones de detección (Movimiento, Intrusión…) también sirven con el disparador estándar
+«estado de un dispositivo».
+
+### Acciones
+
+- **Tomar una instantánea Hikvision** — captura la imagen ahora. Colóquela justo antes de la acción
+  de Gladys «Enviar una imagen de cámara» para recibir el momento exacto de la detección. Salida:
+  `captured`.
+- **Armar o desarmar una detección Hikvision** — activa o desactiva una detección (movimiento, cruce
+  de línea, intrusión, sabotaje) de una cámara. Salidas: `applied`, `enabled`.
+- **Mover una cámara PTZ Hikvision a un preset** — número del preset tal como está guardado en la
+  cámara. Salida: `moved`.
+
+Ejemplo: _Cuando la cámara Jardín detecta una intrusión con el objetivo «persona» y no hay nadie en
+casa → tomar una instantánea → enviar la imagen de la cámara → encender la sirena (salida de
+alarma)._
+
+## 5. Widget del panel
+
+Añada el widget **Hikvision** a un panel: cámaras en línea, detecciones de las últimas 24 horas, la
+imagen de una cámara (la elegida en los ajustes del widget o, por defecto, la última que detectó
+algo) y la última detección de cada cámara. Botones: **Instantánea**, **Desarmar** y **Armar**
+(todas las detecciones de todas las cámaras, tras confirmación).
+
+## Solución de problemas
+
+| Problema                                  | Solución                                                                                                                                                                       |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| «usuario o contraseña rechazados»         | Compruébelos en la interfaz web del dispositivo. Si la cuenta se bloqueó, espere unos 30 minutos y vuelva a guardar la configuración.                                          |
+| «el dispositivo no responde a la ISAPI»   | Active el protocolo de integración (paso 1.2).                                                                                                                                 |
+| «este usuario no tiene permisos»          | Asígnele el rol Operador o el permiso de modificar parámetros.                                                                                                                 |
+| No llega ninguna detección                | Compruebe que la detección está activada en la cámara **y** que «Notificar al centro de vigilancia» está marcado en su método de vinculación. Active los registros detallados. |
+| «la imagen supera los 150 KB»             | Baje la resolución del flujo secundario de la cámara (p. ej. 640×360).                                                                                                         |
+| Una cámara del grabador está desconectada | Gladys la muestra inaccesible y dispara «se desconecta»; vuelve sola.                                                                                                          |
+| HTTPS rechazado                           | Use `http://` o desmarque «Comprobar el certificado HTTPS»; compruebe el puerto.                                                                                               |
+
+## Privacidad y seguridad
+
+Todo queda entre Gladys y sus dispositivos, en su red. La contraseña se guarda en un campo secreto
+de Gladys y nunca se escribe en los registros. La integración solo guarda en su carpeta `/data` lo
+que ha aprendido de los dispositivos (modelo, número de serie, canales), para que un dispositivo
+apagado al arrancar aparezca igualmente como desconectado.

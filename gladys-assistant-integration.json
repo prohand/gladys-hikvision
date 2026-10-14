@@ -1,0 +1,842 @@
+{
+  "manifest_version": 1,
+  "type": "device",
+  "name": "Hikvision",
+  "description": {
+    "en": "Hikvision cameras and recorders: images, detections, alarm I/O and PTZ, on your network.",
+    "fr": "Caméras et enregistreurs Hikvision : images, détections, E/S d'alarme et PTZ, en local.",
+    "de": "Hikvision-Kameras und -Rekorder: Bilder, Erkennungen, Alarm-E/A und PTZ, lokal.",
+    "es": "Cámaras y grabadores Hikvision: imágenes, detecciones, E/S de alarma y PTZ, en local."
+  },
+  "version": "0.0.0",
+  "docker_image": "ghcr.io/prohand/gladys-hikvision:0.0.0",
+  "gladys_version": ">=5.1.0",
+  "cover_image": "https://raw.githubusercontent.com/prohand/gladys-hikvision/main/cover.png",
+  "categories": ["security", "multimedia"],
+  "transports": ["local"],
+  "config_schema": [
+    {
+      "key": "intro",
+      "type": "section",
+      "label": {
+        "en": "Getting started",
+        "fr": "Pour commencer",
+        "de": "Erste Schritte",
+        "es": "Primeros pasos"
+      },
+      "description": {
+        "en": "Everything stays on your network: Gladys talks to each camera or recorder (NVR) over its local ISAPI, no Hik-Connect account needed. Create a dedicated user on the device (Operator role), check that the integration protocol (ISAPI) is enabled, then enter the address of each device below.",
+        "fr": "Tout reste sur votre réseau : Gladys dialogue avec chaque caméra ou enregistreur (NVR) via son ISAPI locale, sans compte Hik-Connect. Créez un utilisateur dédié sur l'appareil (rôle Opérateur), vérifiez que le protocole d'intégration (ISAPI) est activé, puis saisissez ci-dessous l'adresse de chaque appareil.",
+        "de": "Alles bleibt in deinem Netzwerk: Gladys spricht mit jeder Kamera oder jedem Rekorder (NVR) über die lokale ISAPI, ohne Hik-Connect-Konto. Lege auf dem Gerät einen eigenen Benutzer an (Rolle Bediener), prüfe, dass das Integrationsprotokoll (ISAPI) aktiviert ist, und gib unten die Adresse jedes Geräts ein.",
+        "es": "Todo se queda en su red: Gladys se comunica con cada cámara o grabador (NVR) mediante su ISAPI local, sin cuenta Hik-Connect. Cree un usuario dedicado en el dispositivo (rol Operador), compruebe que el protocolo de integración (ISAPI) está activado e introduzca abajo la dirección de cada dispositivo."
+      },
+      "links": [
+        {
+          "url": "https://github.com/prohand/gladys-hikvision/blob/main/docs/en.md",
+          "label": {
+            "en": "Integration documentation",
+            "fr": "Documentation de l'intégration",
+            "de": "Dokumentation der Integration",
+            "es": "Documentación de la integración"
+          }
+        }
+      ]
+    },
+    {
+      "key": "hosts",
+      "type": "string",
+      "label": {
+        "en": "Addresses",
+        "fr": "Adresses",
+        "de": "Adressen",
+        "es": "Direcciones"
+      },
+      "description": {
+        "en": "IP address (or name) of each camera or recorder, separated by commas. Add the port when it is not 80, and https:// for HTTPS. A recorder brings all its cameras: do not add them as well.",
+        "fr": "Adresse IP (ou nom) de chaque caméra ou enregistreur, séparées par des virgules. Ajoutez le port s'il n'est pas 80, et https:// pour le HTTPS. Un enregistreur apporte toutes ses caméras : ne les ajoutez pas en plus.",
+        "de": "IP-Adresse (oder Name) jeder Kamera bzw. jedes Rekorders, durch Kommas getrennt. Gib den Port an, wenn er nicht 80 ist, und https:// für HTTPS. Ein Rekorder bringt alle seine Kameras mit: Füge sie nicht zusätzlich hinzu.",
+        "es": "Dirección IP (o nombre) de cada cámara o grabador, separadas por comas. Añada el puerto si no es 80, y https:// para HTTPS. Un grabador aporta todas sus cámaras: no las añada además."
+      },
+      "placeholder": {
+        "en": "192.168.1.64, 192.168.1.70:8080",
+        "fr": "192.168.1.64, 192.168.1.70:8080",
+        "de": "192.168.1.64, 192.168.1.70:8080",
+        "es": "192.168.1.64, 192.168.1.70:8080"
+      },
+      "required": true
+    },
+    {
+      "key": "username",
+      "type": "string",
+      "label": {
+        "en": "User name",
+        "fr": "Nom d'utilisateur",
+        "de": "Benutzername",
+        "es": "Usuario"
+      },
+      "description": {
+        "en": "The same account on every device. A dedicated Operator user is better than admin.",
+        "fr": "Le même compte sur chaque appareil. Un utilisateur Opérateur dédié vaut mieux qu'admin.",
+        "de": "Dasselbe Konto auf jedem Gerät. Ein eigener Bediener-Benutzer ist besser als admin.",
+        "es": "La misma cuenta en cada dispositivo. Mejor un usuario Operador dedicado que admin."
+      },
+      "required": true,
+      "default": "admin"
+    },
+    {
+      "key": "password",
+      "type": "secret",
+      "label": {
+        "en": "Password",
+        "fr": "Mot de passe",
+        "de": "Passwort",
+        "es": "Contraseña"
+      },
+      "description": {
+        "en": "Hikvision locks the account after a few wrong passwords: a refused password is not retried until you save the configuration again.",
+        "fr": "Hikvision bloque le compte après quelques mauvais mots de passe : un mot de passe refusé n'est pas retenté avant que vous enregistriez à nouveau la configuration.",
+        "de": "Hikvision sperrt das Konto nach einigen falschen Passwörtern: Ein abgelehntes Passwort wird erst wieder versucht, wenn du die Konfiguration erneut speicherst.",
+        "es": "Hikvision bloquea la cuenta tras varias contraseñas erróneas: una contraseña rechazada no se reintenta hasta que vuelva a guardar la configuración."
+      },
+      "required": true
+    },
+    {
+      "key": "verify_tls",
+      "type": "boolean",
+      "label": {
+        "en": "Check the HTTPS certificate",
+        "fr": "Vérifier le certificat HTTPS",
+        "de": "HTTPS-Zertifikat prüfen",
+        "es": "Comprobar el certificado HTTPS"
+      },
+      "description": {
+        "en": "Only for https:// addresses. Hikvision devices ship a self-signed certificate: leave this off unless you installed a certificate Gladys trusts.",
+        "fr": "Uniquement pour les adresses https://. Les appareils Hikvision ont un certificat auto-signé : laissez désactivé, sauf si vous avez installé un certificat reconnu par Gladys.",
+        "de": "Nur für https://-Adressen. Hikvision-Geräte haben ein selbstsigniertes Zertifikat: Lass dies aus, es sei denn, du hast ein Zertifikat installiert, dem Gladys vertraut.",
+        "es": "Solo para direcciones https://. Los dispositivos Hikvision traen un certificado autofirmado: déjelo desactivado salvo que haya instalado un certificado en el que Gladys confíe."
+      },
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "snapshot_interval",
+      "type": "number",
+      "label": {
+        "en": "Snapshot interval (s)",
+        "fr": "Intervalle des images (s)",
+        "de": "Bildintervall (s)",
+        "es": "Intervalo de imágenes (s)"
+      },
+      "description": {
+        "en": "How often each camera's image is refreshed in Gladys, in seconds (10 minimum). 0 turns it off: Gladys then gets an image only when it asks for one.",
+        "fr": "Fréquence de rafraîchissement de l'image de chaque caméra dans Gladys, en secondes (10 minimum). 0 la désactive : Gladys ne reçoit alors une image que lorsqu'il la demande.",
+        "de": "Wie oft das Bild jeder Kamera in Gladys aktualisiert wird, in Sekunden (mindestens 10). 0 schaltet es aus: Gladys bekommt dann nur ein Bild, wenn es eines anfordert.",
+        "es": "Cada cuánto se actualiza la imagen de cada cámara en Gladys, en segundos (mínimo 10). 0 lo desactiva: Gladys solo recibe una imagen cuando la pide."
+      },
+      "required": false,
+      "default": 60,
+      "min": 0,
+      "max": 3600
+    },
+    {
+      "key": "snapshot_stream",
+      "type": "select",
+      "label": {
+        "en": "Image quality",
+        "fr": "Qualité des images",
+        "de": "Bildqualität",
+        "es": "Calidad de imagen"
+      },
+      "description": {
+        "en": "Gladys accepts images up to 150 KB. The sub-stream always fits; the main stream is reduced to 1280×720 and replaced by the sub-stream when still too heavy.",
+        "fr": "Gladys accepte des images jusqu'à 150 Ko. Le flux secondaire passe toujours ; le flux principal est réduit en 1280×720 et remplacé par le flux secondaire s'il reste trop lourd.",
+        "de": "Gladys nimmt Bilder bis 150 KB an. Der Substream passt immer; der Hauptstream wird auf 1280×720 verkleinert und durch den Substream ersetzt, wenn er noch zu groß ist.",
+        "es": "Gladys acepta imágenes de hasta 150 KB. El flujo secundario siempre cabe; el principal se reduce a 1280×720 y se sustituye por el secundario si sigue siendo demasiado pesado."
+      },
+      "required": false,
+      "default": "sub",
+      "options": [
+        {
+          "value": "sub",
+          "label": {
+            "en": "Sub-stream (recommended)",
+            "fr": "Flux secondaire (recommandé)",
+            "de": "Substream (empfohlen)",
+            "es": "Flujo secundario (recomendado)"
+          }
+        },
+        {
+          "value": "main",
+          "label": {
+            "en": "Main stream",
+            "fr": "Flux principal",
+            "de": "Hauptstream",
+            "es": "Flujo principal"
+          }
+        }
+      ]
+    },
+    {
+      "key": "event_hold",
+      "type": "number",
+      "label": {
+        "en": "Detection hold (s)",
+        "fr": "Durée d'une détection (s)",
+        "de": "Haltezeit einer Erkennung (s)",
+        "es": "Duración de una detección (s)"
+      },
+      "description": {
+        "en": "How long a detection stays on after the last event the camera sent. Cameras repeat their events while something moves: one scene trigger per detection, not per repeat.",
+        "fr": "Durée pendant laquelle une détection reste active après le dernier événement envoyé par la caméra. Les caméras répètent leurs événements tant que quelque chose bouge : un déclencheur de scène par détection, pas par répétition.",
+        "de": "Wie lange eine Erkennung nach dem letzten Ereignis der Kamera aktiv bleibt. Kameras wiederholen ihre Ereignisse, solange sich etwas bewegt: ein Szenenauslöser pro Erkennung, nicht pro Wiederholung.",
+        "es": "Cuánto tiempo sigue activa una detección tras el último evento enviado por la cámara. Las cámaras repiten sus eventos mientras algo se mueve: un disparador de escena por detección, no por repetición."
+      },
+      "required": false,
+      "default": 10,
+      "min": 2,
+      "max": 300
+    },
+    {
+      "key": "refresh_interval",
+      "type": "number",
+      "label": {
+        "en": "Health check interval (s)",
+        "fr": "Intervalle de vérification (s)",
+        "de": "Prüfintervall (s)",
+        "es": "Intervalo de comprobación (s)"
+      },
+      "description": {
+        "en": "How often each device is checked: reachable or not, cameras online, alarm outputs and detection switches.",
+        "fr": "Fréquence de vérification de chaque appareil : joignable ou non, caméras en ligne, sorties d'alarme et interrupteurs de détection.",
+        "de": "Wie oft jedes Gerät geprüft wird: erreichbar oder nicht, Kameras online, Alarmausgänge und Erkennungsschalter.",
+        "es": "Cada cuánto se comprueba cada dispositivo: accesible o no, cámaras en línea, salidas de alarma e interruptores de detección."
+      },
+      "required": false,
+      "default": 60,
+      "min": 30,
+      "max": 3600
+    },
+    {
+      "key": "debug_logs",
+      "type": "boolean",
+      "label": {
+        "en": "Detailed logs (debug)",
+        "fr": "Journaux détaillés (debug)",
+        "de": "Detaillierte Protokolle (Debug)",
+        "es": "Registros detallados (depuración)"
+      },
+      "description": {
+        "en": "Log every event the devices send. Turn it on to understand why a detection does not show up, then off again: it is verbose. Passwords are never logged.",
+        "fr": "Journalise chaque événement envoyé par les appareils. Activez-le pour comprendre pourquoi une détection n'arrive pas, puis désactivez-le : c'est verbeux. Les mots de passe ne sont jamais journalisés.",
+        "de": "Protokolliert jedes Ereignis der Geräte. Schalte es ein, um zu verstehen, warum eine Erkennung nicht ankommt, und danach wieder aus: Es ist ausführlich. Passwörter werden nie protokolliert.",
+        "es": "Registra cada evento que envían los dispositivos. Actívelo para entender por qué no llega una detección y desactívelo después: es muy prolijo. Las contraseñas nunca se registran."
+      },
+      "required": false,
+      "default": false
+    }
+  ],
+  "actions": [
+    {
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
+      },
+      "description": {
+        "en": "Reach every device now (a refused password included) and say what Gladys gets from it.",
+        "fr": "Joint chaque appareil maintenant (y compris après un mot de passe refusé) et indique ce que Gladys en obtient.",
+        "de": "Erreicht jetzt jedes Gerät (auch nach einem abgelehnten Passwort) und zeigt, was Gladys davon bekommt.",
+        "es": "Contacta ahora con cada dispositivo (incluso tras una contraseña rechazada) e indica lo que Gladys obtiene de él."
+      },
+      "timeout_seconds": 120
+    }
+  ],
+  "scene_triggers": [
+    {
+      "key": "event_detected",
+      "label": {
+        "en": "A Hikvision camera detects something",
+        "fr": "Une caméra Hikvision détecte quelque chose",
+        "de": "Eine Hikvision-Kamera erkennt etwas",
+        "es": "Una cámara Hikvision detecta algo"
+      },
+      "description": {
+        "en": "Motion, line crossing, intrusion, tampering… or an alarm input going active. Once per detection, not once per event the camera repeats.",
+        "fr": "Mouvement, franchissement de ligne, intrusion, sabotage… ou une entrée d'alarme qui s'active. Une fois par détection, pas à chaque répétition de la caméra.",
+        "de": "Bewegung, Linienüberschreitung, Eindringen, Sabotage… oder ein Alarmeingang, der aktiv wird. Einmal pro Erkennung, nicht bei jeder Wiederholung der Kamera.",
+        "es": "Movimiento, cruce de línea, intrusión, sabotaje… o una entrada de alarma que se activa. Una vez por detección, no en cada repetición de la cámara."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Camera",
+            "fr": "Caméra",
+            "de": "Kamera",
+            "es": "Cámara"
+          },
+          "required": false
+        },
+        {
+          "key": "event_type",
+          "type": "multi_select",
+          "label": {
+            "en": "Event",
+            "fr": "Événement",
+            "de": "Ereignis",
+            "es": "Evento"
+          },
+          "options": [
+            {
+              "value": "motion",
+              "label": {
+                "en": "Motion",
+                "fr": "Mouvement",
+                "de": "Bewegung",
+                "es": "Movimiento"
+              }
+            },
+            {
+              "value": "line_crossing",
+              "label": {
+                "en": "Line crossing",
+                "fr": "Franchissement de ligne",
+                "de": "Linienüberschreitung",
+                "es": "Cruce de línea"
+              }
+            },
+            {
+              "value": "intrusion",
+              "label": {
+                "en": "Intrusion",
+                "fr": "Intrusion",
+                "de": "Eindringen",
+                "es": "Intrusión"
+              }
+            },
+            {
+              "value": "region_entrance",
+              "label": {
+                "en": "Region entrance",
+                "fr": "Entrée dans une zone",
+                "de": "Bereichseintritt",
+                "es": "Entrada en zona"
+              }
+            },
+            {
+              "value": "region_exiting",
+              "label": {
+                "en": "Region exiting",
+                "fr": "Sortie d'une zone",
+                "de": "Bereichsaustritt",
+                "es": "Salida de zona"
+              }
+            },
+            {
+              "value": "tamper",
+              "label": {
+                "en": "Tampering",
+                "fr": "Sabotage",
+                "de": "Sabotage",
+                "es": "Sabotaje"
+              }
+            },
+            {
+              "value": "face",
+              "label": {
+                "en": "Face",
+                "fr": "Visage",
+                "de": "Gesicht",
+                "es": "Rostro"
+              }
+            },
+            {
+              "value": "scene_change",
+              "label": {
+                "en": "Scene change",
+                "fr": "Changement de scène",
+                "de": "Szenenwechsel",
+                "es": "Cambio de escena"
+              }
+            },
+            {
+              "value": "unattended_object",
+              "label": {
+                "en": "Unattended object",
+                "fr": "Objet abandonné",
+                "de": "Zurückgelassenes Objekt",
+                "es": "Objeto abandonado"
+              }
+            },
+            {
+              "value": "object_removal",
+              "label": {
+                "en": "Object removed",
+                "fr": "Objet retiré",
+                "de": "Entferntes Objekt",
+                "es": "Objeto retirado"
+              }
+            },
+            {
+              "value": "pir",
+              "label": {
+                "en": "PIR sensor",
+                "fr": "Détecteur PIR",
+                "de": "PIR-Sensor",
+                "es": "Sensor PIR"
+              }
+            },
+            {
+              "value": "video_loss",
+              "label": {
+                "en": "Video loss",
+                "fr": "Perte vidéo",
+                "de": "Videoverlust",
+                "es": "Pérdida de vídeo"
+              }
+            },
+            {
+              "value": "alarm_input",
+              "label": {
+                "en": "Alarm input",
+                "fr": "Entrée d'alarme",
+                "de": "Alarmeingang",
+                "es": "Entrada de alarma"
+              }
+            }
+          ]
+        },
+        {
+          "key": "target",
+          "type": "multi_select",
+          "label": {
+            "en": "Target (smart events)",
+            "fr": "Cible (événements intelligents)",
+            "de": "Ziel (intelligente Ereignisse)",
+            "es": "Objetivo (eventos inteligentes)"
+          },
+          "options": [
+            {
+              "value": "human",
+              "label": {
+                "en": "Person",
+                "fr": "Personne",
+                "de": "Person",
+                "es": "Persona"
+              }
+            },
+            {
+              "value": "vehicle",
+              "label": {
+                "en": "Vehicle",
+                "fr": "Véhicule",
+                "de": "Fahrzeug",
+                "es": "Vehículo"
+              }
+            }
+          ]
+        }
+      ],
+      "variables": [
+        {
+          "key": "event_type",
+          "type": "string",
+          "label": {
+            "en": "Event",
+            "fr": "Événement",
+            "de": "Ereignis",
+            "es": "Evento"
+          }
+        },
+        {
+          "key": "target",
+          "type": "string",
+          "label": {
+            "en": "Target",
+            "fr": "Cible",
+            "de": "Ziel",
+            "es": "Objetivo"
+          }
+        },
+        {
+          "key": "device_name",
+          "type": "string",
+          "label": {
+            "en": "Camera name",
+            "fr": "Nom de la caméra",
+            "de": "Kameraname",
+            "es": "Nombre de la cámara"
+          }
+        },
+        {
+          "key": "channel",
+          "type": "number",
+          "label": {
+            "en": "Channel (or alarm input)",
+            "fr": "Canal (ou entrée d'alarme)",
+            "de": "Kanal (oder Alarmeingang)",
+            "es": "Canal (o entrada de alarma)"
+          }
+        },
+        {
+          "key": "description",
+          "type": "string",
+          "label": {
+            "en": "Description from the device",
+            "fr": "Description de l'appareil",
+            "de": "Beschreibung des Geräts",
+            "es": "Descripción del dispositivo"
+          }
+        }
+      ]
+    },
+    {
+      "key": "camera_offline",
+      "label": {
+        "en": "A Hikvision camera goes offline",
+        "fr": "Une caméra Hikvision se déconnecte",
+        "de": "Eine Hikvision-Kamera geht offline",
+        "es": "Una cámara Hikvision se desconecta"
+      },
+      "description": {
+        "en": "The camera, or the recorder it is behind, stopped answering.",
+        "fr": "La caméra, ou l'enregistreur derrière lequel elle se trouve, ne répond plus.",
+        "de": "Die Kamera oder der Rekorder, an dem sie hängt, antwortet nicht mehr.",
+        "es": "La cámara, o el grabador al que está conectada, ha dejado de responder."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Camera",
+            "fr": "Caméra",
+            "de": "Kamera",
+            "es": "Cámara"
+          },
+          "required": false
+        }
+      ],
+      "variables": [
+        {
+          "key": "device_name",
+          "type": "string",
+          "label": {
+            "en": "Camera name",
+            "fr": "Nom de la caméra",
+            "de": "Kameraname",
+            "es": "Nombre de la cámara"
+          }
+        },
+        {
+          "key": "reason",
+          "type": "string",
+          "label": {
+            "en": "Reason (code)",
+            "fr": "Raison (code)",
+            "de": "Grund (Code)",
+            "es": "Motivo (código)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "camera_online",
+      "label": {
+        "en": "A Hikvision camera is back online",
+        "fr": "Une caméra Hikvision est de retour",
+        "de": "Eine Hikvision-Kamera ist wieder online",
+        "es": "Una cámara Hikvision vuelve a estar en línea"
+      },
+      "description": {
+        "en": "A camera that was offline answers again.",
+        "fr": "Une caméra qui était hors ligne répond à nouveau.",
+        "de": "Eine Kamera, die offline war, antwortet wieder.",
+        "es": "Una cámara que estaba desconectada vuelve a responder."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Camera",
+            "fr": "Caméra",
+            "de": "Kamera",
+            "es": "Cámara"
+          },
+          "required": false
+        }
+      ],
+      "variables": [
+        {
+          "key": "device_name",
+          "type": "string",
+          "label": {
+            "en": "Camera name",
+            "fr": "Nom de la caméra",
+            "de": "Kameraname",
+            "es": "Nombre de la cámara"
+          }
+        }
+      ]
+    }
+  ],
+  "scene_actions": [
+    {
+      "key": "take_snapshot",
+      "label": {
+        "en": "Take a Hikvision snapshot",
+        "fr": "Prendre une image Hikvision",
+        "de": "Hikvision-Schnappschuss aufnehmen",
+        "es": "Tomar una instantánea Hikvision"
+      },
+      "description": {
+        "en": "Capture the camera's image now, e.g. before the \"Send a camera image\" action.",
+        "fr": "Capture l'image de la caméra maintenant, par exemple avant l'action « Envoyer une image de caméra ».",
+        "de": "Nimmt jetzt das Bild der Kamera auf, z. B. vor der Aktion „Kamerabild senden“.",
+        "es": "Captura ahora la imagen de la cámara, p. ej. antes de la acción «Enviar una imagen de cámara»."
+      },
+      "timeout_seconds": 20,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Camera",
+            "fr": "Caméra",
+            "de": "Kamera",
+            "es": "Cámara"
+          },
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "key": "captured",
+          "type": "boolean",
+          "label": {
+            "en": "Image captured",
+            "fr": "Image capturée",
+            "de": "Bild aufgenommen",
+            "es": "Imagen capturada"
+          }
+        }
+      ]
+    },
+    {
+      "key": "set_detection",
+      "label": {
+        "en": "Arm or disarm a Hikvision detection",
+        "fr": "Armer ou désarmer une détection Hikvision",
+        "de": "Hikvision-Erkennung aktivieren oder deaktivieren",
+        "es": "Armar o desarmar una detección Hikvision"
+      },
+      "description": {
+        "en": "Switch a detection of a camera on or off, e.g. off when someone is home.",
+        "fr": "Active ou désactive une détection d'une caméra, par exemple quand quelqu'un est à la maison.",
+        "de": "Schaltet eine Erkennung einer Kamera ein oder aus, z. B. aus, wenn jemand zu Hause ist.",
+        "es": "Activa o desactiva una detección de una cámara, p. ej. cuando hay alguien en casa."
+      },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Camera",
+            "fr": "Caméra",
+            "de": "Kamera",
+            "es": "Cámara"
+          },
+          "required": true
+        },
+        {
+          "key": "detection",
+          "type": "select",
+          "label": {
+            "en": "Detection",
+            "fr": "Détection",
+            "de": "Erkennung",
+            "es": "Detección"
+          },
+          "required": false,
+          "default": "motion",
+          "options": [
+            {
+              "value": "motion",
+              "label": {
+                "en": "Motion detection",
+                "fr": "Détection de mouvement",
+                "de": "Bewegungserkennung",
+                "es": "Detección de movimiento"
+              }
+            },
+            {
+              "value": "line_crossing",
+              "label": {
+                "en": "Line crossing",
+                "fr": "Franchissement de ligne",
+                "de": "Linienüberschreitung",
+                "es": "Cruce de línea"
+              }
+            },
+            {
+              "value": "intrusion",
+              "label": {
+                "en": "Intrusion",
+                "fr": "Intrusion",
+                "de": "Eindringen",
+                "es": "Intrusión"
+              }
+            },
+            {
+              "value": "tamper",
+              "label": {
+                "en": "Tampering",
+                "fr": "Sabotage",
+                "de": "Sabotage",
+                "es": "Sabotaje"
+              }
+            }
+          ]
+        },
+        {
+          "key": "enabled",
+          "type": "boolean",
+          "label": {
+            "en": "Enabled",
+            "fr": "Activée",
+            "de": "Aktiviert",
+            "es": "Activada"
+          },
+          "required": false,
+          "default": true
+        }
+      ],
+      "outputs": [
+        {
+          "key": "applied",
+          "type": "boolean",
+          "label": {
+            "en": "Applied",
+            "fr": "Appliqué",
+            "de": "Übernommen",
+            "es": "Aplicado"
+          }
+        },
+        {
+          "key": "enabled",
+          "type": "boolean",
+          "label": {
+            "en": "Detection enabled",
+            "fr": "Détection activée",
+            "de": "Erkennung aktiviert",
+            "es": "Detección activada"
+          }
+        }
+      ]
+    },
+    {
+      "key": "goto_preset",
+      "label": {
+        "en": "Move a Hikvision PTZ camera to a preset",
+        "fr": "Envoyer une caméra PTZ Hikvision sur un preset",
+        "de": "Hikvision-PTZ-Kamera auf ein Preset fahren",
+        "es": "Mover una cámara PTZ Hikvision a un preset"
+      },
+      "description": {
+        "en": "Send a PTZ camera to one of the presets saved on it.",
+        "fr": "Envoie une caméra PTZ sur l'une des positions enregistrées sur elle.",
+        "de": "Fährt eine PTZ-Kamera auf eine der auf ihr gespeicherten Positionen.",
+        "es": "Envía una cámara PTZ a una de las posiciones guardadas en ella."
+      },
+      "timeout_seconds": 15,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Camera",
+            "fr": "Caméra",
+            "de": "Kamera",
+            "es": "Cámara"
+          },
+          "required": true
+        },
+        {
+          "key": "preset",
+          "type": "number",
+          "label": {
+            "en": "Preset number",
+            "fr": "Numéro du preset",
+            "de": "Preset-Nummer",
+            "es": "Número de preset"
+          },
+          "required": true,
+          "min": 1,
+          "max": 300
+        }
+      ],
+      "outputs": [
+        {
+          "key": "moved",
+          "type": "boolean",
+          "label": {
+            "en": "Order accepted",
+            "fr": "Ordre accepté",
+            "de": "Befehl angenommen",
+            "es": "Orden aceptada"
+          }
+        }
+      ]
+    }
+  ],
+  "widgets": [
+    {
+      "key": "hikvision",
+      "label": {
+        "en": "Hikvision",
+        "fr": "Hikvision",
+        "de": "Hikvision",
+        "es": "Hikvision"
+      },
+      "description": {
+        "en": "Cameras online, detections, a live image and arm / disarm buttons.",
+        "fr": "Caméras en ligne, détections, une image en direct et boutons armer / désarmer.",
+        "de": "Kameras online, Erkennungen, ein Live-Bild und Schalter zum Aktivieren / Deaktivieren.",
+        "es": "Cámaras en línea, detecciones, una imagen en directo y botones armar / desarmar."
+      },
+      "icon": "video",
+      "settings": [
+        {
+          "key": "camera",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Camera shown",
+            "fr": "Caméra affichée",
+            "de": "Angezeigte Kamera",
+            "es": "Cámara mostrada"
+          },
+          "description": {
+            "en": "Empty: the camera that detected something last.",
+            "fr": "Vide : la dernière caméra à avoir détecté quelque chose.",
+            "de": "Leer: die Kamera, die zuletzt etwas erkannt hat.",
+            "es": "Vacío: la última cámara que detectó algo."
+          },
+          "required": false
+        }
+      ],
+      "action_timeout_seconds": 60
+    }
+  ]
+}
