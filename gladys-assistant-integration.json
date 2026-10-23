@@ -8,8 +8,8 @@
     "de": "Hikvision-Kameras und -Rekorder: Bilder, Erkennungen, Alarm-E/A und PTZ, lokal.",
     "es": "Cámaras y grabadores Hikvision: imágenes, detecciones, E/S de alarma y PTZ, en local."
   },
-  "version": "0.0.1",
-  "docker_image": "ghcr.io/prohand/gladys-hikvision:0.0.1",
+  "version": "0.0.2",
+  "docker_image": "ghcr.io/prohand/gladys-hikvision:0.0.2",
   "gladys_version": ">=5.1.0",
   "cover_image": "https://raw.githubusercontent.com/prohand/gladys-hikvision/main/cover.png",
   "categories": ["security", "multimedia"],
