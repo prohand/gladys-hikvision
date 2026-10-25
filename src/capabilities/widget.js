@@ -34,14 +34,16 @@ function clip(text, length) {
 function chooseCamera(cameras, settings) {
   const chosen = cameras.find((camera) => camera.externalId === settings?.camera);
   if (chosen) return chosen;
-  const withEvents = cameras
-    .filter((camera) => camera.lastEvent && camera.online)
+  const usable = cameras.filter((camera) => camera.online && camera.enabled);
+  const withEvents = usable
+    .filter((camera) => camera.lastEvent)
     .sort((a, b) => b.lastEvent.at - a.lastEvent.at);
-  return withEvents[0] ?? cameras.find((camera) => camera.online);
+  return withEvents[0] ?? usable[0];
 }
 
 async function imageOf(hub, camera) {
-  if (!camera?.online) {
+  // A camera disabled in Gladys shows no image anywhere, the widget included.
+  if (!camera?.online || !camera.enabled) {
     return undefined;
   }
   let timer;
@@ -61,6 +63,19 @@ async function imageOf(hub, camera) {
 }
 
 function cameraRow(hub, camera) {
+  if (!camera.enabled) {
+    return {
+      label: clip(camera.name, 40),
+      icon: 'eye-off',
+      value: {
+        en: 'Disabled in Gladys',
+        fr: 'Désactivée dans Gladys',
+        de: 'In Gladys deaktiviert',
+        es: 'Desactivada en Gladys',
+      },
+      color: WIDGET_COLORS.NEUTRAL,
+    };
+  }
   if (!camera.online) {
     return {
       label: clip(camera.name, 40),
@@ -156,7 +171,7 @@ export function createWidgets(getHub) {
           });
         }
 
-        if (camera?.online) {
+        if (camera?.online && camera.enabled) {
           components.push({
             type: 'button',
             label: { en: 'Snapshot', fr: 'Instantané', de: 'Schnappschuss', es: 'Instantánea' },

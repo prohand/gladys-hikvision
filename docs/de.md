@@ -11,7 +11,7 @@ Sabotage…), Alarmein- und -ausgänge, PTZ, Szenen und ein Dashboard-Widget.
 
 ## Voraussetzungen
 
-- Gladys **5.1 oder neuer**.
+- Gladys **5.3 oder neuer**.
 - Eine Hikvision-Kamera oder ein Rekorder im selben Netzwerk wie Gladys, mit fester IP-Adresse
   (DHCP-Reservierung).
 - Ein Benutzerkonto auf diesem Gerät (siehe unten).
@@ -61,6 +61,7 @@ Kameras online, gefundene Erkennungen, ob Ereignisse live ankommen, sowie die Al
 | Funktion                          | Typ             | Hinweise                                                                             |
 | --------------------------------- | --------------- | ------------------------------------------------------------------------------------ |
 | Bild                              | Kamera          | im Bildintervall aktualisiert und auf Anforderung                                    |
+| In Gladys aktiviert               | Kamera          | aus: Gladys zeigt die Kamera, ihre Bilder und Erkennungen nicht mehr                 |
 | Bewegung                          | Bewegungsmelder | immer vorhanden                                                                      |
 | Linienüberschreitung / Eindringen | Bewegungsmelder | wenn die Kamera diese intelligenten Erkennungen kann                                 |
 | Sabotage                          | Sabotage        | wenn die Kamera es kann                                                              |
@@ -71,6 +72,12 @@ Kameras online, gefundene Erkennungen, ob Ereignisse live ankommen, sowie die Al
 **Ein Gerät „alarm I/O“ pro Kamera oder Rekorder mit potenzialfreien Kontakten**: Jeder
 **Alarmeingang** ist ein binärer Eingang (1, solange er im Alarm ist), jeder **Alarmausgang**
 (Relais, Sirene) ist ein Schalter.
+
+**In Gladys aktiviert** ist ein Privatsphäre-Schalter auf der Seite von Gladys: ausgeschaltet
+verschwindet die Kamera aus dem Dashboard und den Szenen (kein Bild, keine Erkennung, kein
+Szenen-Ereignis), nimmt aber selbst weiter auf. Die Wahl übersteht einen Neustart. Bei einem Gerät,
+das vor dieser Funktion angelegt wurde, klicke im Reiter **Entdecken** auf **Aktualisieren**, um sie
+hinzuzufügen.
 
 Jedes Gerät zeigt ein Abzeichen **lokal**, wenn es antwortet, sonst **nicht erreichbar**. Ein
 oranger Punkt bedeutet: Das Gerät antwortet, aber sein Ereignisstream ist nicht verbunden –

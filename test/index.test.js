@@ -80,6 +80,7 @@ test('a camera becomes a Gladys device, with its alarm I/O', async (t) => {
     cam.features.map((entry) => entry.external_id.slice(cam.external_id.length + 1)),
     [
       'image',
+      'enabled',
       'motion',
       'line-crossing',
       'intrusion',
@@ -100,8 +101,10 @@ test('a camera becomes a Gladys device, with its alarm I/O', async (t) => {
   );
 
   assert.equal(gladys.fake.connectionStatus.connected, true);
-  // The detection switches are read and published.
+  // The detection switches are read and published, and the privacy gate is open.
   assert.equal(gladys.fake.lastState(`${cam.external_id}:motion-enabled`), 1);
+  assert.equal(gladys.fake.lastState(`${cam.external_id}:enabled`), 1);
+  assert.equal(feature(cam, 'enabled').type, 'enabled');
 
   // Once the event stream is up, the badge is plain local.
   await fake.waitForStream();
@@ -194,6 +197,53 @@ test('Gladys gets a fresh image on demand, and the snapshot loop pushes one', as
   await hub.snapshotTick();
   assert.equal(gladys.fake.cameraImages.length, 1);
   assert.equal(gladys.fake.cameraImages[0].device_external_id, cam.external_id);
+});
+
+test('a camera disabled in Gladys sends no image nor detection, even after a restart', async (t) => {
+  const first = await startFakeHikvision();
+  const dataDir = await mkdtemp(join(tmpdir(), 'gladys-hikvision-'));
+  t.after(async () => {
+    await first.close();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  {
+    const { gladys, hub, fake } = await setup(t, { fake: first, dataDir });
+    const cam = camera(gladys);
+    const ack = await gladys.fake.setValue(cam, feature(cam, 'enabled'), 0);
+    assert.equal(ack.success, true, ack.error);
+    assert.equal(gladys.fake.lastState(`${cam.external_id}:enabled`), 0);
+
+    const image = await gladys.fake.getImage(cam);
+    assert.equal(image.success, false);
+    await hub.snapshotTick();
+    assert.equal(gladys.fake.cameraImages.length, 0);
+    const snapshot = await gladys.fake.sceneAction('take_snapshot', { device: cam.external_id });
+    assert.deepEqual(snapshot.data.outputs, { captured: false });
+
+    await fake.waitForStream();
+    fake.alert({ type: 'VMD' });
+    fake.alert({ type: 'IO', channel: undefined, port: 1 }); // the contacts are not the camera
+    await waitFor(() => gladys.fake.sceneEvents.some((e) => e.data.event_type === 'alarm_input'));
+    assert.ok(!gladys.fake.sceneEvents.some((e) => e.data.event_type === 'motion'));
+    assert.notEqual(gladys.fake.lastState(`${cam.external_id}:motion`), 1);
+
+    const widget = await gladys.fake.widgetGet('hikvision', { language: 'en' });
+    assert.deepEqual(validateWidgetContent(widget.data.content), []);
+    const components = widget.data.content.components;
+    assert.ok(!components.some((component) => component.type === 'image'));
+    const status = components.find((component) => component.type === 'status');
+    assert.equal(status.items[0].value.en, 'Disabled in Gladys');
+    await gladys.fake.shutdown();
+  }
+  const saved = JSON.parse(await readFile(join(dataDir, 'disabled-cameras.json'), 'utf8'));
+  assert.deepEqual(saved, { disabled: [`${first.device.serial}-1`] });
+
+  const { gladys } = await setup(t, { fake: first, dataDir });
+  const cam = camera(gladys);
+  assert.equal(gladys.fake.lastState(`${cam.external_id}:enabled`), 0);
+  const ack = await gladys.fake.setValue(cam, feature(cam, 'enabled'), 1);
+  assert.equal(ack.success, true, ack.error);
+  assert.equal((await gladys.fake.getImage(cam)).success, true);
 });
 
 test('no image is pushed for a camera the user did not create', async (t) => {

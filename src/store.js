@@ -1,6 +1,7 @@
 // -----------------------------------------------------------------------------
 // What the integration remembers between two runs, in /data (the only
-// writable path of the container): the last discovery of each address.
+// writable path of the container): the last discovery of each address, and
+// the cameras the user disabled in Gladys (the `enabled` feature).
 //
 // A camera that is off when the integration starts cannot be asked what it
 // is; without this file its Gladys devices would be unknown until it comes
@@ -16,6 +17,7 @@ const logger = createLogger({ name: 'store' });
 
 export const DATA_DIR = process.env.DATA_DIR ?? '/data';
 const FILE = 'stations.json';
+const DISABLED_FILE = 'disabled-cameras.json';
 
 /**
  * @param {string} [dir] directory, /data by default
@@ -33,18 +35,50 @@ export async function loadStations(dir = DATA_DIR) {
   }
 }
 
+/** Write atomically (a temporary file renamed), so a crash never leaves half a file. */
+async function writeAtomically(dir, file, value) {
+  try {
+    await mkdir(dir, { recursive: true });
+    const temporary = join(dir, `${file}.tmp`);
+    await writeFile(temporary, JSON.stringify(value, null, 2));
+    await rename(temporary, join(dir, file));
+  } catch (error) {
+    logger.warn(`Cannot write ${file}: ${error.message}`);
+  }
+}
+
 /**
- * Write atomically (a temporary file renamed), so a crash never leaves half a file.
  * @param {Record<string, object>} stations base URL -> station state
  * @param {string} [dir] directory, /data by default
  */
-export async function saveStations(stations, dir = DATA_DIR) {
+export function saveStations(stations, dir = DATA_DIR) {
+  return writeAtomically(dir, FILE, stations);
+}
+
+/**
+ * The cameras disabled in Gladys, by platform id (`<serial>-<channel>`, the
+ * stable part of the external id). A camera is enabled unless listed: a lost
+ * file never hides a camera.
+ * @param {string} [dir] directory, /data by default
+ * @returns {Promise<Set<string>>}
+ */
+export async function loadDisabledCameras(dir = DATA_DIR) {
   try {
-    await mkdir(dir, { recursive: true });
-    const temporary = join(dir, `${FILE}.tmp`);
-    await writeFile(temporary, JSON.stringify(stations, null, 2));
-    await rename(temporary, join(dir, FILE));
+    const parsed = JSON.parse(await readFile(join(dir, DISABLED_FILE), 'utf8'));
+    const list = Array.isArray(parsed?.disabled) ? parsed.disabled : [];
+    return new Set(list.filter((id) => typeof id === 'string'));
   } catch (error) {
-    logger.warn(`Cannot write ${FILE}: ${error.message}`);
+    if (error?.code !== 'ENOENT') {
+      logger.warn(`Cannot read ${DISABLED_FILE}, every camera enabled: ${error.message}`);
+    }
+    return new Set();
   }
+}
+
+/**
+ * @param {Set<string>} disabled platform ids
+ * @param {string} [dir] directory, /data by default
+ */
+export function saveDisabledCameras(disabled, dir = DATA_DIR) {
+  return writeAtomically(dir, DISABLED_FILE, { disabled: [...disabled].sort() });
 }
