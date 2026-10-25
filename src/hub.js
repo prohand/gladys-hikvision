@@ -18,6 +18,9 @@ import {
   buildCameraDevice,
   cameraStates,
   deviceExternalId as cameraExternalId,
+  enabledState,
+  FEATURES as CAMERA_FEATURES,
+  platformId,
   setCameraValue,
 } from './devices/camera.js';
 import {
@@ -29,7 +32,13 @@ import {
   setAlarmIoValue,
 } from './devices/alarmIO.js';
 import { explainError } from './messages.js';
-import { loadStations, saveStations, DATA_DIR } from './store.js';
+import {
+  loadDisabledCameras,
+  loadStations,
+  saveDisabledCameras,
+  saveStations,
+  DATA_DIR,
+} from './store.js';
 import { createHash } from 'node:crypto';
 
 const logger = createLogger({ name: 'hub' });
@@ -84,6 +93,8 @@ export class Hub {
     this.recentEvents = [];
     /** Camera device external_id -> online, as last reported by a scene event. */
     this.online = new Map();
+    /** Platform ids of the cameras disabled in Gladys (the `enabled` feature). */
+    this.disabled = new Set();
     this.timers = [];
     this.snapshotRunning = false;
     this.refreshing = new Set();
@@ -117,6 +128,7 @@ export class Hub {
     this.tracker = this.createTracker();
 
     const cache = await loadStations(this.dataDir);
+    this.disabled = await loadDisabledCameras(this.dataDir);
     this.stations = config.stations.map((host) => this.createStation(host, cache[host.baseUrl]));
     await Promise.all(this.stations.map((station) => this.discoverStation(station)));
     if (generation !== this.generation) {
@@ -312,11 +324,18 @@ export class Hub {
     }
   }
 
-  /** Detection switches and alarm contacts, deduplicated. */
+  /** Privacy gates, detection switches and alarm contacts, deduplicated. */
   async publishStates(stations = this.stations) {
     const states = [];
     for (const station of stations) {
-      if (!station.known || !station.reachable) continue;
+      if (!station.known) continue;
+      // The privacy gate is Gladys' own: known even when the camera is off.
+      for (const channel of station.channels) {
+        states.push(
+          enabledState(this.gladys, station, channel, this.channelEnabled(station, channel)),
+        );
+      }
+      if (!station.reachable) continue;
       for (const channel of station.channels) {
         if (channel.online) {
           states.push(...cameraStates(this.gladys, station, channel));
@@ -341,6 +360,43 @@ export class Hub {
   async republishStates() {
     this.gladys.forgetPublishedStates?.();
     await this.publishStates();
+  }
+
+  // --- Privacy gate (camera `enabled` feature) --------------------------------
+
+  channelEnabled(station, channel) {
+    return !this.disabled.has(platformId(station, channel));
+  }
+
+  /** Whether Gladys may use this camera; anything else than a camera is. */
+  isEnabled(externalId) {
+    const entry = this.registry.get(externalId);
+    return entry?.kind !== 'camera' || this.channelEnabled(entry.station, entry.channel);
+  }
+
+  /**
+   * Turn a camera's privacy gate on or off: kept in /data, so a restart
+   * neither shows a camera the user hid nor hides one.
+   */
+  async setEnabled(externalId, enabled) {
+    const { station, channel } = this.cameraEntry(externalId);
+    const id = platformId(station, channel);
+    if (enabled) {
+      this.disabled.delete(id);
+    } else {
+      this.disabled.add(id);
+      // The last image goes too: nothing of a hidden camera is served.
+      this.images.delete(externalId);
+    }
+    await saveDisabledCameras(this.disabled, this.dataDir);
+    const state = enabledState(this.gladys, station, channel, enabled);
+    if (this.features.has(state.device_feature_external_id)) {
+      await this.gladys.publishState(state.device_feature_external_id, state.state);
+    }
+    logger.info(
+      `${station.label}: channel ${channel.id} ${enabled ? 'enabled' : 'disabled'} in Gladys`,
+    );
+    this.nudgeWidget();
   }
 
   /** Whether the user created this device in Gladys. */
@@ -482,6 +538,10 @@ export class Hub {
       return;
     }
     const device = cameraExternalId(this.gladys, station, channel);
+    if (!this.channelEnabled(station, channel)) {
+      // Disabled in Gladys: its detections stay on the camera.
+      return;
+    }
     this.tracker.signal(`${device}|${alert.key}`, alert.active, {
       station,
       channel,
@@ -605,6 +665,9 @@ export class Hub {
    * @returns {Promise<{ buffer: Buffer, at: number, key: string }>}
    */
   async captureImage(externalId, maxAgeMs = FRESH_IMAGE_MS) {
+    if (!this.isEnabled(externalId)) {
+      throw new Error(`${externalId} is disabled in Gladys`);
+    }
     const cached = this.images.get(externalId);
     if (cached && this.now() - cached.at <= maxAgeMs) {
       return cached;
@@ -639,6 +702,7 @@ export class Hub {
         this.stations.map(async (station) => {
           for (const channel of station.channels) {
             if (!this.channelOnline(station, channel)) continue;
+            if (!this.channelEnabled(station, channel)) continue;
             const externalId = cameraExternalId(this.gladys, station, channel);
             if (!this.isCreated(externalId)) continue;
             try {
@@ -668,6 +732,10 @@ export class Hub {
       throw new Error(`${device.external_id} is not known: is its camera or recorder configured?`);
     }
     const featureKey = feature.external_id.slice(device.external_id.length + 1);
+    if (entry.kind === 'camera' && featureKey === CAMERA_FEATURES.ENABLED) {
+      await this.setEnabled(device.external_id, Number(value) === 1);
+      return;
+    }
     const command = {
       station: entry.station,
       channel: entry.channel,
@@ -809,6 +877,7 @@ export class Hub {
         channel: entry.channel,
         name: buildCameraDevice(this.gladys, entry.station, entry.channel).name,
         online: this.channelOnline(entry.station, entry.channel),
+        enabled: this.channelEnabled(entry.station, entry.channel),
         lastEvent: this.lastEvents.get(externalId),
       });
     }

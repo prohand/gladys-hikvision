@@ -6,6 +6,17 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- "Enabled in Gladys" switch on every camera: turned off, Gladys gets no image and no detection from that camera, and the choice survives a restart. Devices already created get it with the **Update** button of the Discover tab.
+- Search keywords in the store catalog (ISAPI, NVR, DVR, AcuSense, ColorVu…).
+
+### Changed
+
+- Gladys 5.3.0 or later is now required (manifest `keywords`).
+- `@gladysassistant/integration-sdk` 0.16.
+- The release workflow runs the store admission checks once the image is published; pull requests skip the image check.
+
 ## [0.0.2] - 2026-10-23
 
 - Maintenance release, no functional change.

@@ -11,8 +11,8 @@ dependency: `@gladysassistant/integration-sdk`) for **Hikvision IP cameras and r
 It started from the official template (GladysAssistant/integration-template-js); its workflows are
 the ones of prohand/gladys-devmel.
 
-Gladys gets: one device per camera channel (image, detections as binary sensors, detection
-switches, PTZ move and presets), one "alarm I/O" device per Hikvision device with dry contacts,
+Gladys gets: one device per camera channel (image, the Gladys-side `enabled` privacy gate,
+detections as binary sensors, detection switches, PTZ move and presets), one "alarm I/O" device per Hikvision device with dry contacts,
 scene triggers (`event_detected`, `camera_offline`, `camera_online`), scene actions
 (`take_snapshot`, `set_detection`, `goto_preset`), the `hikvision` widget and the
 `test_connection` action.
@@ -55,9 +55,12 @@ test/helpers/fakeHikvision.js  fake device on the loopback (real Digest, scripte
 ## Invariants worth knowing
 
 - **External ids are forever.** Camera: `externalIds('camera', '<serial>-<channel>')`; alarm I/O:
-  `externalIds('alarm-io', '<serial>')`. Feature keys (`motion`, `line-crossing`, `intrusion`,
-  `tamper`, `<kind>-enabled`, `ptz-move`, `ptz-preset`, `input-<n>`, `output-<n>`), trigger,
+  `externalIds('alarm-io', '<serial>')`. Feature keys (`enabled`, `motion`, `line-crossing`,
+  `intrusion`, `tamper`, `<kind>-enabled`, `ptz-move`, `ptz-preset`, `input-<n>`, `output-<n>`), trigger,
   action, widget, config keys and the `event_type` option values are stored by users: never rename.
+- **A camera disabled in Gladys** (`enabled` = 0, kept in `/data/disabled-cameras.json` by
+  platform id) gets no image (periodic, on demand, widget, scene action) and its detections fire
+  neither a state nor a scene event. Its detection switches, PTZ and alarm contacts still work.
 - **A wrong password costs ONE failed login, never more.** Hikvision locks the account (or the
   client IP) after a few failures, and a lock looks like a wrong password. `client.js` retries a
   401 only when no credentials were sent yet or the cached nonce expired; after an `auth` /
@@ -93,7 +96,8 @@ test/helpers/fakeHikvision.js  fake device on the loopback (real Digest, scripte
 - **Changelog**: every user-visible change adds a line under `## [Unreleased]` in `CHANGELOG.md`
   (`### Added`, `Changed`, `Fixed`, `Removed`, `Security`). Never write a version heading.
 - **Manifest**: every text is `{ en, fr, de, es }`; the catalog `description` is 10–100 characters
-  per language; `gladys_version` stays `>=5.1.0` or higher (widgets, scene triggers / actions).
+  per language; `gladys_version` stays `>=5.3.0` or higher (widgets, scene triggers / actions:
+  5.1; `keywords`: 5.3).
   `test/manifest.test.js` ties the manifest to the code: change both sides together.
 - **User-facing text** (action answers, statuses, widget, docs) is written in the four languages;
   `docs/en.md`, `docs/fr.md`, `docs/de.md`, `docs/es.md` are kept in sync.

@@ -1,6 +1,6 @@
 # Hikvision — Gladys Assistant integration
 
-External integration for [Gladys Assistant](https://gladysassistant.com) (5.1+) that connects
+External integration for [Gladys Assistant](https://gladysassistant.com) (5.3+) that connects
 **Hikvision IP cameras and recorders (NVR / DVR)** over their **local ISAPI**: camera images,
 real-time detections, alarm inputs and outputs, PTZ, scene triggers and actions, and a dashboard
 widget.
@@ -17,17 +17,17 @@ User documentation: [English](docs/en.md) · [Français](docs/fr.md) · [Deutsch
 
 ## Features
 
-| Surface              | What it does                                                                                                                                                                                                    |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Devices              | One device per camera channel (image, motion, line crossing, intrusion, tampering, detection switches, PTZ move, PTZ presets) and one "alarm I/O" device per device with dry contacts (inputs, output switches) |
-| Camera images        | Periodic snapshots (`publishCameraImage`) + fresh capture on demand (`onGetImage`), always under 150 KB                                                                                                         |
-| Real-time detections | The device's alert stream (`/ISAPI/Event/notification/alertStream`), one transition per detection                                                                                                               |
-| Scene triggers       | `event_detected` (filters: camera, event, target person / vehicle), `camera_offline`, `camera_online`                                                                                                           |
-| Scene actions        | `take_snapshot`, `set_detection` (arm / disarm), `goto_preset`                                                                                                                                                  |
-| Widget               | `hikvision`: cameras online, detections (24 h), live image, last detection per camera, Snapshot / Disarm / Arm                                                                                                  |
-| Configuration action | `test_connection`: one line per device, with what to fix                                                                                                                                                        |
-| Transport badge      | `local` / `unreachable` per device, degraded (orange dot) when the event stream is down                                                                                                                         |
-| Languages            | English, French, German, Spanish (configuration, messages, widget, documentation)                                                                                                                               |
+| Surface              | What it does                                                                                                                                                                                                                                    |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Devices              | One device per camera channel (image, enabled-in-Gladys privacy gate, motion, line crossing, intrusion, tampering, detection switches, PTZ move, PTZ presets) and one "alarm I/O" device per device with dry contacts (inputs, output switches) |
+| Camera images        | Periodic snapshots (`publishCameraImage`) + fresh capture on demand (`onGetImage`), always under 150 KB                                                                                                                                         |
+| Real-time detections | The device's alert stream (`/ISAPI/Event/notification/alertStream`), one transition per detection                                                                                                                                               |
+| Scene triggers       | `event_detected` (filters: camera, event, target person / vehicle), `camera_offline`, `camera_online`                                                                                                                                           |
+| Scene actions        | `take_snapshot`, `set_detection` (arm / disarm), `goto_preset`                                                                                                                                                                                  |
+| Widget               | `hikvision`: cameras online, detections (24 h), live image, last detection per camera, Snapshot / Disarm / Arm                                                                                                                                  |
+| Configuration action | `test_connection`: one line per device, with what to fix                                                                                                                                                                                        |
+| Transport badge      | `local` / `unreachable` per device, degraded (orange dot) when the event stream is down                                                                                                                                                         |
+| Languages            | English, French, German, Spanish (configuration, messages, widget, documentation)                                                                                                                                                               |
 
 ## Project structure
 

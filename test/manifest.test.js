@@ -47,6 +47,27 @@ test('every text is written in the four languages of Gladys', () => {
   }
 });
 
+// The store's shelves (Gladys 5.3 added the last four). An unknown key is only
+// dropped with a warning, so a typo would silently cost a shelf.
+const CATEGORIES = [
+  'climate',
+  'lighting',
+  'energy',
+  'security',
+  'multimedia',
+  'appliances',
+  'environment',
+  'protocols',
+  'network',
+  'notifications',
+  'assistants',
+  'services',
+  'transport',
+  'vehicles',
+  'servers',
+  'leisure',
+];
+
 test('the catalog card fits what the store allows', () => {
   assert.ok(manifest.name.length >= 3 && manifest.name.length <= 30);
   for (const [language, text] of Object.entries(manifest.description)) {
@@ -57,6 +78,26 @@ test('the catalog card fits what the store allows', () => {
   }
   assert.deepEqual(manifest.transports, ['local']);
   assert.ok(manifest.categories.length >= 1 && manifest.categories.length <= 3);
+  assert.equal(new Set(manifest.categories).size, manifest.categories.length);
+  for (const category of manifest.categories) {
+    assert.ok(CATEGORIES.includes(category), `unknown category "${category}"`);
+  }
+});
+
+test('the search keywords follow the store rules', () => {
+  const { keywords } = manifest;
+  assert.ok(Array.isArray(keywords) && keywords.length >= 1 && keywords.length <= 10);
+  const normalized = keywords.map((keyword) => keyword.trim().toLowerCase());
+  assert.equal(new Set(normalized).size, keywords.length, 'keywords must be unique');
+  for (const keyword of normalized) {
+    assert.ok(keyword.length >= 2 && keyword.length <= 30, `keyword "${keyword}": 2-30 characters`);
+  }
+});
+
+test('the integration is not limited to some countries', () => {
+  // Hikvision devices are sold worldwide and reached on the LAN: `countries`
+  // would hide the integration from the catalog shelves elsewhere.
+  assert.equal(manifest.countries, undefined);
 });
 
 test('version, image tag and package.json agree', () => {
@@ -65,9 +106,14 @@ test('version, image tag and package.json agree', () => {
 });
 
 test('the capability fields come with a Gladys that knows them', () => {
+  // Compared as numbers: widgets / scene_triggers / scene_actions need 5.1,
+  // keywords / countries / music 5.3.
   assert.match(manifest.gladys_version, /^>=5\.(\d+)\.\d+$/);
   const minor = Number(/^>=5\.(\d+)/.exec(manifest.gladys_version)[1]);
   assert.ok(minor >= 1, 'widgets / scene_triggers / scene_actions need >=5.1.0');
+  if (manifest.keywords || manifest.countries || manifest.music) {
+    assert.ok(minor >= 3, 'keywords / countries / music need >=5.3.0');
+  }
 });
 
 test('config_schema defaults are DEFAULT_CONFIG', () => {

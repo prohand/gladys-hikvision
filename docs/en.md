@@ -10,7 +10,7 @@ inputs and outputs, PTZ, scenes and a dashboard widget.
 
 ## What you need
 
-- Gladys **5.1 or later**.
+- Gladys **5.3 or later**.
 - A Hikvision camera or recorder on the same network as Gladys, with a fixed IP address (DHCP
   reservation).
 - A user account on that device (see below).
@@ -57,18 +57,24 @@ Then open the **Discover** tab and create the devices you want.
 
 **One device per camera** (a camera has one, a recorder one per camera behind it):
 
-| Feature                   | Type          | Notes                                                           |
-| ------------------------- | ------------- | --------------------------------------------------------------- |
-| Image                     | camera        | refreshed at the snapshot interval, and on demand               |
-| Motion                    | motion sensor | always present                                                  |
-| Line crossing / Intrusion | motion sensor | when the camera supports these smart detections                 |
-| Tampering                 | tamper        | when the camera supports it                                     |
-| Motion / … detection      | switch        | turns that detection on or off **on the camera** (arm / disarm) |
-| PTZ                       | camera move   | PTZ cameras only: short pan / tilt / zoom steps, always stopped |
-| Preset                    | camera preset | PTZ cameras with saved presets: the list comes from the camera  |
+| Feature                   | Type          | Notes                                                               |
+| ------------------------- | ------------- | ------------------------------------------------------------------- |
+| Image                     | camera        | refreshed at the snapshot interval, and on demand                   |
+| Enabled in Gladys         | camera        | off: Gladys stops showing the camera, its images and its detections |
+| Motion                    | motion sensor | always present                                                      |
+| Line crossing / Intrusion | motion sensor | when the camera supports these smart detections                     |
+| Tampering                 | tamper        | when the camera supports it                                         |
+| Motion / … detection      | switch        | turns that detection on or off **on the camera** (arm / disarm)     |
+| PTZ                       | camera move   | PTZ cameras only: short pan / tilt / zoom steps, always stopped     |
+| Preset                    | camera preset | PTZ cameras with saved presets: the list comes from the camera      |
 
 **One "alarm I/O" device per camera or recorder that has dry contacts**: each **alarm input** is a
 binary input (1 while in alarm), each **alarm output** (relay, siren) is a switch.
+
+**Enabled in Gladys** is a privacy switch on Gladys' side: turned off, the camera disappears from the
+dashboard and the scenes (no image, no detection, no scene event), while it keeps recording on its
+own. The choice survives a restart. For a device created before this feature, click **Update** in
+the **Discover** tab to add it.
 
 Each device shows a **local** badge when it answers, **unreachable** otherwise. An orange dot means
 the device answers but its event stream is not connected: detections do not arrive.

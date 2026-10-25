@@ -11,7 +11,7 @@ intrusion, sabotage…), entrées et sorties d'alarme, PTZ, scènes et un widget
 
 ## Ce qu'il faut
 
-- Gladys **5.1 ou plus récent**.
+- Gladys **5.3 ou plus récent**.
 - Une caméra ou un enregistreur Hikvision sur le même réseau que Gladys, avec une adresse IP fixe
   (réservation DHCP).
 - Un compte utilisateur sur cet appareil (voir ci-dessous).
@@ -61,6 +61,7 @@ Ouvrez ensuite l'onglet **Découverte** et créez les appareils voulus.
 | Fonctionnalité                      | Type                   | Remarques                                                                            |
 | ----------------------------------- | ---------------------- | ------------------------------------------------------------------------------------ |
 | Image                               | caméra                 | rafraîchie à l'intervalle des images, et à la demande                                |
+| Activée dans Gladys                 | caméra                 | désactivée : Gladys n'affiche plus la caméra, ni ses images ni ses détections        |
 | Mouvement                           | détecteur de mouvement | toujours présent                                                                     |
 | Franchissement de ligne / Intrusion | détecteur de mouvement | si la caméra gère ces détections intelligentes                                       |
 | Sabotage                            | sabotage               | si la caméra le gère                                                                 |
@@ -71,6 +72,11 @@ Ouvrez ensuite l'onglet **Découverte** et créez les appareils voulus.
 **Un appareil « alarm I/O » par caméra ou enregistreur doté de contacts secs** : chaque **entrée
 d'alarme** est une entrée binaire (1 tant qu'elle est en alarme), chaque **sortie d'alarme**
 (relais, sirène) est un interrupteur.
+
+**Activée dans Gladys** est un interrupteur de confidentialité côté Gladys : désactivée, la caméra
+disparaît du tableau de bord et des scènes (pas d'image, pas de détection, pas d'événement de scène),
+mais continue d'enregistrer de son côté. Le choix survit à un redémarrage. Pour un appareil créé avant
+cette fonctionnalité, cliquez sur **Mettre à jour** dans l'onglet **Découverte** pour l'ajouter.
 
 Chaque appareil affiche un badge **local** quand il répond, **injoignable** sinon. Un point orange
 veut dire que l'appareil répond mais que son flux d'événements n'est pas connecté : les détections

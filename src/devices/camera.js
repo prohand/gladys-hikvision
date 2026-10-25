@@ -4,6 +4,9 @@
 //
 // Features, depending on what the channel supports:
 //   - image          the snapshot (camera image channel, never a state)
+//   - enabled        Gladys-side privacy gate: off, Gladys stops showing the
+//                    camera and the integration stops pushing its images and
+//                    its detections. The camera itself keeps recording.
 //   - motion         motion detected (VMD, or PIR) — always present
 //   - line-crossing  smart line crossing detected
 //   - intrusion      smart intrusion (field) detected
@@ -21,6 +24,7 @@ export const DEVICE_TYPE = 'camera';
 
 export const FEATURES = {
   IMAGE: 'image',
+  ENABLED: 'enabled',
   MOTION: 'motion',
   LINE_CROSSING: 'line-crossing',
   INTRUSION: 'intrusion',
@@ -109,6 +113,14 @@ export function buildCameraDevice(gladys, station, channel) {
       min: 0,
       max: 0,
     },
+    binary(
+      ids,
+      FEATURES.ENABLED,
+      'Enabled in Gladys',
+      DEVICE_FEATURE_CATEGORIES.CAMERA,
+      DEVICE_FEATURE_TYPES.CAMERA.ENABLED,
+      false,
+    ),
   ];
   for (const [kind, { sensor, label }] of Object.entries(DETECTION_FEATURES)) {
     // Motion is always there: every Hikvision camera reports it, even when
@@ -183,6 +195,16 @@ export function buildCameraDevice(gladys, station, channel) {
     ],
     features,
   };
+}
+
+/**
+ * The state of the Gladys-side privacy gate: known without the camera, so
+ * published even while it does not answer.
+ * @returns {{ device_feature_external_id: string, state: number }}
+ */
+export function enabledState(gladys, station, channel, enabled) {
+  const ids = gladys.externalIds(DEVICE_TYPE, platformId(station, channel));
+  return { device_feature_external_id: ids.feature(FEATURES.ENABLED), state: enabled ? 1 : 0 };
 }
 
 /**

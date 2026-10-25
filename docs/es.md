@@ -11,7 +11,7 @@ sabotaje…), entradas y salidas de alarma, PTZ, escenas y un widget para el pan
 
 ## Requisitos
 
-- Gladys **5.1 o posterior**.
+- Gladys **5.3 o posterior**.
 - Una cámara o un grabador Hikvision en la misma red que Gladys, con una dirección IP fija (reserva
   DHCP).
 - Una cuenta de usuario en ese dispositivo (ver más abajo).
@@ -62,6 +62,7 @@ Abra después la pestaña **Descubrir** y cree los dispositivos que desee.
 | Función                     | Tipo                 | Notas                                                                         |
 | --------------------------- | -------------------- | ----------------------------------------------------------------------------- |
 | Imagen                      | cámara               | se actualiza en el intervalo de imágenes y bajo demanda                       |
+| Activada en Gladys          | cámara               | desactivada: Gladys deja de mostrar la cámara, sus imágenes y sus detecciones |
 | Movimiento                  | sensor de movimiento | siempre presente                                                              |
 | Cruce de línea / Intrusión  | sensor de movimiento | si la cámara admite estas detecciones inteligentes                            |
 | Sabotaje                    | sabotaje             | si la cámara lo admite                                                        |
@@ -72,6 +73,11 @@ Abra después la pestaña **Descubrir** y cree los dispositivos que desee.
 **Un dispositivo «alarm I/O» por cámara o grabador con contactos secos**: cada **entrada de
 alarma** es una entrada binaria (1 mientras está en alarma), cada **salida de alarma** (relé,
 sirena) es un interruptor.
+
+**Activada en Gladys** es un interruptor de privacidad del lado de Gladys: desactivada, la cámara
+desaparece del panel y de las escenas (sin imagen, sin detección, sin evento de escena), pero sigue
+grabando por su cuenta. La elección se conserva tras un reinicio. Para un dispositivo creado antes de
+esta función, haga clic en **Actualizar** en la pestaña **Descubrir** para añadirla.
 
 Cada dispositivo muestra una insignia **local** cuando responde, **inaccesible** si no. Un punto
 naranja significa que el dispositivo responde pero su flujo de eventos no está conectado: las
