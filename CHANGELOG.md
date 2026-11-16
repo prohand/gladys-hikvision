@@ -6,6 +6,10 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-16
+
+- Maintenance release, no functional change.
+
 ## [0.1.0] - 2026-10-25
 
 ### Added
@@ -43,7 +47,8 @@ All notable changes to this integration are documented here. The format follows
 
 - A refused password is never retried automatically, so the integration cannot lock the account on the device.
 
-[Unreleased]: https://github.com/prohand/gladys-hikvision/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/prohand/gladys-hikvision/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/prohand/gladys-hikvision/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/prohand/gladys-hikvision/compare/v0.0.2...v0.1.0
 [0.0.2]: https://github.com/prohand/gladys-hikvision/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/prohand/gladys-hikvision/releases/tag/v0.0.1
